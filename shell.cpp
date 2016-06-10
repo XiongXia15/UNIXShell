@@ -20,6 +20,7 @@ int is_back(char *order);     //分析是否为后台进程,并且将字符&去掉
 int redirect(char *input);    //输入输出重定向
 void do_cd(char *argv[]);     //用于cd命令
 char *is_order_exist(const char *order);   //判断命令是否存在
+int number(const char *input);	//分析命令和参数数量，来划分相应字符串
 char **analize(const char *input);    //分析键入的命令,获取命令和参数并保存在arg中
     
 
@@ -73,7 +74,7 @@ int order_number(const char *input)
 			i++;
 			if(input[i+1] == ';')
 			{
-				fprintf(stderr,"Syntax Error. Unexpected token ';;' \n")
+				fprintf(stderr,"Syntax Error. Unexpected token ';;' \n");
 				return -1;
 			}
 			else
@@ -85,8 +86,7 @@ int order_number(const char *input)
 
 char **order_name(const char *input)
 {
-//	int order_number(const char *input);
-	int i,j=0,k=0,max_len;
+	int i,j=0,k,max_len;
 	char **order;
 	
 	max_len=strlen(input);
@@ -97,6 +97,7 @@ char **order_name(const char *input)
 		order[i]=(char *)malloc((max_len+1)*sizeof(char));
 		order[i][0]='\0';
 	}
+	k=0;
 	for (i=0;i<=max_len;i++)
 	{
 		if (input[i]!=';')
@@ -133,7 +134,7 @@ int pipel(char *input)
 	char **order;
 	int *child;
 	int **fd; 
-	int i=0,j=0; 
+	int i=0,j=0,back=0; 
 	
 	len=strlen(input);
 	k=pipe_number(input);
@@ -159,8 +160,9 @@ int pipel(char *input)
 			j=0;
 		}
 	}
-	for(i=0;i<k+1;i++)
-		printf("%s\n",order[i]);
+	
+	/*for(i=0;i<k+1;i++)
+		printf("%s\n",order[i]);*/
 
 	for(i=0;i<k;i++)
 		if(pipe(fd[i]) == -1) 
@@ -423,9 +425,9 @@ int redirect(char *input)
 
 	k=number(real_order);
 	analized_order=analize(real_order);//命令已经保存在*analized_order[]中
-	if(strcmp(analized_order[0], "leave") == 0) //退出命令
+	if(strcmp(analized_order[0], "q") == 0) //退出命令
 	{
-		printf("bye-bye\n");
+		printf("QUIT\n");
 		// 释放申请的空间
 		for(i=0;i<k;i++)
 			free(analized_order[i]);
@@ -542,6 +544,30 @@ char *is_order_exist(const char *order)
 	return NULL;
 }
 
+int number(const char *input)	
+{
+	int i=0,k=0;
+	int input_len=strlen(input);	
+	int flag=0;
+	for (i=0;i<input_len;i++)
+	{
+
+		if(input[i]==' '||input[i]=='<'||input[i]=='>'||input[i]=='	')
+		{
+			flag=0;
+			continue;
+		}
+		else 
+		{
+			if(flag==0)
+			{
+				flag=1;
+				k++;
+			}
+		}
+	}
+	return k;
+}
 
 char **analize(const char *input)
 {
@@ -626,24 +652,27 @@ int main(int argc,char **argv)
 		if (number<0)
 			continue;
 		every_order=order_name(all_order);
-	}
-	while (i<number)
-	{
-		if(strlen(every_order[i])!=0)
-		{
-			k=pipe_number(every_order[i]);	
-			if(k!=0)
-				pipel(every_order[i]);
-			else
-				redirect(every_order[i]);
+		i=0;
+		while (i<number)
+		{	
+			if(strlen(every_order[i])!=0)
+			{
+				k=pipe_number(every_order[i]);	
+				if(k!=0)
+					pipel(every_order[i]);
+				else
+					redirect(every_order[i]);
+				//for debug
+				//printf("%s\n",every_order[i]);	
+			}	
+			i++;
 		}
-		i++;
+		for(i=0;i<number;i++)
+			free(every_order[i]);
+		free(every_order);
+		free(all_order);
+		free(path);
 	}
-	for(i=0;i<number;i++)
-		free(every_order[i]);
-	free(every_order);
-	free(all_order);
-	free(path);
 }
 
 
