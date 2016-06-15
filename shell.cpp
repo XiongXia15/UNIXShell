@@ -99,7 +99,6 @@ char *read_order(char *buffer)   //从键盘中读取命令
 		{
 			if(j>0)
 				j=j-1;
-			printf(" %d ",j);
 			cmd[j] = '\0';
 			printf("\r");
 			printf("\r%s > $ %s",path,cmd);
@@ -112,13 +111,16 @@ char *read_order(char *buffer)   //从键盘中读取命令
 		else			//保存命令到数组并显示在屏幕
 		{
 			printf("%c",key);
-			cmd[j++]=(char)key;
+			cmd[j]=(char)key;
+		//	printf("      j  %d   ",j);
+			j++;
 		}
 	}
 	len=j;
 	j=0;
 		printf("\n");	
-		reset_keypress();		//恢复标准模式	 
+		reset_keypress();		//恢复标准模式
+//	printf("cmd %s \n",cmd);	 
 	for(input_lenth=0;input_lenth<len;input_lenth++)
 	{
 		buffer[input_lenth] = cmd[input_lenth];  
@@ -137,7 +139,7 @@ char *read_order(char *buffer)   //从键盘中读取命令
 		fprintf(stderr,"Error! Can't malloc enough space for input\n");
 		return NULL;
 	}
-	printf("input   %s\n",buffer);
+//	printf("input   %s\n",buffer);
 	strcpy(input,buffer);
 	return input;
 }
@@ -518,7 +520,7 @@ int redirect(char *input)	//输入输出重定向
 	k=number(real_order);
 	analized_order=analize(real_order);//命令已经保存在*analized_order[]中
 
-	if(strcmp(analized_order[0], "q") == 0) //退出命令
+/*	if(strcmp(analized_order[0], "q") == 0) //退出命令
 	{
 		printf("QUIT\n");
 		// 释放申请的空间
@@ -526,7 +528,7 @@ int redirect(char *input)	//输入输出重定向
 			free(analized_order[i]);
 		free(analized_order);
 		free(real_order);
-		exit(1);
+		exit (0);
 		return 1;
 	}
 //	printf("analized_order[0] %s\n",analized_order[0]);
@@ -538,13 +540,11 @@ int redirect(char *input)	//输入输出重定向
 			free(analized_order[i]);
 		free(analized_order);
 		free(real_order);
-		exit(1);
 		return 1;
 	}
 	if(strcmp(analized_order[0], "fg") == 0) 
 	{
 		fg_jobs(analized_order[1]);
-		exit(1);
 		return 1;
 		
 	}
@@ -555,13 +555,12 @@ int redirect(char *input)	//输入输出重定向
 			free(analized_order[i]);
 		free(analized_order);
 		free(real_order);
-		exit(1);
 		return 1;
 	}
 
 
 	/*如果输入的是cd命令*/
-	if (strcmp(analized_order[0],"cd")==0)
+/*	if (strcmp(analized_order[0],"cd")==0)
 	{
 		do_cd(analized_order);
 		// 释放申请的空间
@@ -570,7 +569,7 @@ int redirect(char *input)	//输入输出重定向
 		free(analized_order);
 		free(real_order);
 		return 1;
-	}
+	}*/
 	order_path=is_order_exist(analized_order[0]);
 	if(order_path==NULL)	//can't find the order
 	{
@@ -885,10 +884,6 @@ void ctrl_z(int CtrlZ)
 	strcpy(pi->comand," ");
 	head=jobs_link(pi);
 	kill(PID,SIGSTOP);
-//	printf("%d\n",PID);
-	return;
-//	printf("[root@localhost ] ysh>");
-//	fflush(stdout);
 }
 
 void ctrl_c(int CtrlC) 
@@ -919,7 +914,6 @@ void fg_jobs(char *arg)
 		sscanf(arg,"%d",&num);
 	//	len=strlen(arg);
 		num--;
-	//	num=(int)arg[1];
 		printf("fg arg %s %d\n",arg,num);
 		if(p == NULL)
 		{
@@ -971,8 +965,8 @@ void bg_jobs(char *arg)
 int main(int argc,char **argv)
 {
 	char *path,*buffer;
-	char *all_order,**every_order;
-	int i=0,pipe,k,number;
+	char *all_order,**every_order,**analized_order;
+	int i=0,pipe,k,number,len;
 	NODE *pi=NULL;
 	int flag=0;
 	pid_t pid;
@@ -1003,9 +997,53 @@ int main(int argc,char **argv)
 		{	
 			if(strlen(every_order[i])!=0)
 			{
-				printf("every_order[i] %s\n",every_order[i]);
+				analized_order=analize(every_order[i]);//命令已经保存在*analized_order[]中
+				if(strcmp(analized_order[0], "q") == 0) //退出命令
+				{
+					printf("QUIT\n");
+					// 释放申请的空间
+					for(i=0;i<k;i++)
+						free(analized_order[i]);
+					free(analized_order);
+					exit (0);
+					return 1;
+				}
+					
+				else if(strcmp(analized_order[0], "jobs") == 0) 
+				{
+					output_jobs();
+					for(i=0;i<k;i++)
+						free(analized_order[i]);
+					free(analized_order);
+				}
+				else if(strcmp(analized_order[0], "fg") == 0) 
+				{
+					fg_jobs(analized_order[1]);
+		
+				}
+				else if(strcmp(analized_order[0], "bg") == 0) 
+				{
+					bg_jobs(analized_order[1]);
+					for(i=0;i<k;i++)
+						free(analized_order[i]);
+					free(analized_order);
+				}
+				/*如果输入的是cd命令*/
+				else if (strcmp(analized_order[0],"cd")==0)
+				{
+					do_cd(analized_order);
+					// 释放申请的空间
+					for(i=0;i<k;i++)
+						free(analized_order[i]);
+					free(analized_order);
+				}
+				else 
+				{
 				if(is_back(every_order[i])==1) 
 				{
+					len = strlen(every_order[i]);
+					if(every_order[i][len] == '&')
+						every_order[i][len]='\0';
 					flag=1;
 					pi=(NODE *)malloc(sizeof(NODE));
 					pi->num=NUM;
@@ -1026,7 +1064,7 @@ int main(int argc,char **argv)
 					pipel(every_order[i]);
 					else
 					redirect(every_order[i]);
-					printf("redirect\n");
+				//	printf("redirect\n");
 				
 				//for debug
 				//printf("%s\n",every_order[i]);
@@ -1043,6 +1081,7 @@ int main(int argc,char **argv)
 						waitpid(pid,NULL,WUNTRACED);
 					}
 				}	
+			}
 			}	
 			i++;
 		}
