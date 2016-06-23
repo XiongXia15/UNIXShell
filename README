@@ -1,1 +1,17 @@
 The program implements UNIXShell,using C
+
+You can compile the program by makefile
+
+The command to run it:
+./Cshell
+
+You can test the program as followings:
+Enter the command:
+1. ¡°ls¡±£¬¡°ls ¡±,¡° ls¡±,¡°	ls	¡±,¡°ls   -a   -l¡± 
+2. "cd ..", "cd /home","exit","ls; cd .."
+3. "ls>test" , "ls	>	test" £¬ "ls	>test","ls>>test","cat<test","cat>test<test1"
+4. "ls | more","ls | more | wc -l","man ls | col -b >ls.man.txt"
+5. enter a command like "firefox",then use command "jobs" to check process£¬and use "bg 1" to run the firefox in the the background, use "fg 1" to run the process,use keyboard shortcues "Ctrl+C" to kill the process, use keyboard shortcues "Ctrl+Z" to stop the process.
+6.    ......
+
+Try to read the program to get more functions 
